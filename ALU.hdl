@@ -1,0 +1,96 @@
+/* Operation | zx | nx | zy | ny | f | no
+ * 0         | 1  | 0  | 1  | 0  | 1 | 0 
+ * 1         | 1  | 1  | 1  | 1  | 1 | 1  
+ * -1        | 1  | 0  | 1  | 0  | 1 | 1  
+ * x         | 0  | 0  | 1  | 0  | 0 | 0  
+ * y         | 1  | 0  | 0  | 0  | 0 | 0 
+ * !x        | 0  | 1  | 1  | 0  | 0 | 0 
+ * !y        | 1  | 0  | 0  | 1  | 0 | 0  
+ * -x        | 0  | 1  | 1  | 0  | 1 | 1  
+ * -y        | 1  | 0  | 0  | 1  | 1 | 1 
+ * x+1       | 0  | 0  | 1  | 1  | 1 | 0 
+ * y+1       | 1  | 1  | 0  | 0  | 1 | 0  
+ * x-1       | 0  | 0  | 1  | 0  | 1 | 1 
+ * y-1       | 1  | 0  | 0  | 0  | 1 | 1  
+ * x+y       | 0  | 0  | 0  | 0  | 1 | 0  
+ * x-y       | 0  | 0  | 0  | 1  | 1 | 0  
+ * y-x       | 0  | 1  | 0  | 0  | 1 | 0  
+ * x&y       | 0  | 0  | 0  | 0  | 0 | 0  
+ * x|y       | 0  | 1  | 0  | 1  | 0 | 1  
+*/
+CHIP ALU {
+    IN  
+        x[16], y[16],  // Entradas de 16 bits
+        zx,            // Bit de control: si zx=1, la entrada x se convierte en 0; si zx=0, x se mantiene sin cambios
+        nx,            // Bit de control: si nx=1, se aplica NOT a x (después de zx); si nx=0, x no se niega
+        zy,            // Bit de control: si zy=1, la entrada y se convierte en 0; si zy=0, y se mantiene sin cambios
+        ny,            // Bit de control: si ny=1, se aplica NOT a y (después de zy); si ny=0, y no se niega
+        f,             // Bit de control: si f=1, la operación es suma (x2 + y2); si f=0, la operación es AND (x2 & y2)
+        no;            // Bit de control: si no=1, se aplica NOT al resultado final; si no=0, el resultado no se niega
+    OUT 
+        out[16],       // Salida de 16 bits: resultado final de la operación de la ALU
+        zr,            // zr=1 si out es exactamente 0 (todos los bits son 0); zr=0 si out no es 0
+        ng;            // ng=1 si out es negativo (bit 15=1 en complemento a 2); ng=0 si no es negativo
+
+    PARTS:
+    // *Preprocesamiento de x: Se ajusta x según los bits de control zx y nx
+    // - Mux16 selecciona entre x y 0 basado en zx
+    Mux16(a=x, b=false, sel=zx, out=x1);  
+        // Si zx=1, selecciona b=false (0), por lo que x1=0. Si zx=0, selecciona a=x, por lo que x1=x.
+    // - Not16 calcula la negación de x1 para usarla si nx lo requiere
+    Not16(in=x1, out=negatedX);           
+        // Aplica NOT bit a bit: negatedX[i] = NOT(x1[i]) para cada bit de x1.
+    // - Mux16 decide si usar x1 o su negación según nx
+    Mux16(a=x1, b=negatedX, sel=nx, out=x2);  
+        // Si nx=1, selecciona b=negatedX, por lo que x2=NOT(x1). Si nx=0, selecciona a=x1, por lo que x2=x1.
+
+    // *Preprocesamiento de y**: Se ajusta y según los bits de control zy y ny
+    // - Mux16 selecciona entre y y 0 basado en zy
+    Mux16(a=y, b=false, sel=zy, out=y1);  
+        // Si zy=1, selecciona b=false (0), por lo que y1=0. Si zy=0, selecciona a=y, por lo que y1=y.
+    // - Not16 calcula la negación de y1 para usarla si ny lo requiere
+    Not16(in=y1, out=negatedY);           
+        // Aplica NOT bit a bit: negatedY[i] = NOT(y1[i]) para cada bit de y1.
+    // - Mux16 decide si usar y1 o su negación según ny
+    Mux16(a=y1, b=negatedY, sel=ny, out=y2);  
+        // Si ny=1, selecciona b=negatedY, por lo que y2=NOT(y1). Si ny=0, selecciona a=y1, por lo que y2=y1.
+
+    // *Operación principal: Se calcula el resultado según el bit de control f
+    // - Add16 realiza la suma de x2 y y2
+    Add16(a=x2, b=y2, out=added);         
+        // Suma bit a bit: added[i] = x2[i] + y2[i] + acarreo, generando un resultado de 16 bits.
+    // - And16 realiza la operación AND entre x2 y y2
+    And16(a=x2, b=y2, out=xyAnd);         
+        // AND bit a bit: xyAnd[i] = x2[i] AND y2[i] para cada bit.
+    // - Mux16 selecciona entre AND y suma según f
+    Mux16(a=xyAnd, b=added, sel=f, out=result);  
+        // Si f=1, selecciona b=added(suma), por lo que result=x2+y2. Si f=0, selecciona a=xyAnd (AND), por lo que result=x2&y2.
+
+    //  Se ajusta el resultado final según el bit de control no
+    // - Not16 calcula la negación del resultado para usarla si no lo requiere
+    Not16(in=result, out=negatedResult);  
+        // Aplica NOT bit a bit: negatedResult[i] = NOT(result[i]) para cada bit de result.
+    // - Mux16 decide si usar result o su negación según no, y genera la salida final
+    Mux16(a=result, b=negatedResult, sel=no, out=out, out[15]=firstOut, out[0..7]=finalLeft, out[8..15]=finalRight);  
+        // Si no=1, selecciona b=negatedResult, por lo que out=NOT(result). Si no=0, selecciona a=result, por lo que out=result.
+        // Además, extrae: firstOut=out[15] (bit más significativo), finalLeft=out[0..7], finalRight=out[8..15].
+
+    // *Cálculo de ng (negativo): Determina si el resultado es negativo
+    // - Usa el bit más significativo (out[15]) como indicador 
+    And(a=firstOut, b=true, out=ng);  
+        // ng = firstOut AND true = firstOut. Si out[15]=1, ng=1 (negativo). Si out[15]=0, ng=0 (no negativo).
+
+    // *Cálculo de zr (cero): Determina si el resultado es igual a 0
+    // - Or8Way verifica si hay algún 1 en los primeros 8 bits (out[0..7])
+    Or8Way(in=finalLeft, out=zrl);    
+        // zrl = OR(out[0], out[1], ..., out[7]). Si algún bit es 1, zrl=1; si todos son 0, zrl=0.
+    // - Or8Way verifica si hay algún 1 en los últimos 8 bits (out[8..15])
+    Or8Way(in=finalRight, out=zrr);   
+        // zrr = OR(out[8], out[9], ..., out[15]). Si algún bit es 1, zrr=1; si todos son 0, zrr=0.
+    // - Or combina los resultados para determinar si hay algún 1 en todo out
+    Or(a=zrl, b=zrr, out=nzr);        
+        // nzr = zrl OR zrr. Si zrl=1 o zrr=1, nzr=1 (out no es 0). Si ambos son 0, nzr=0 (out es 0).
+    // - Not invierte nzr para obtener zr
+    Not(in=nzr, out=zr);              
+        // zr = NOT(nzr). Si nzr=0 (out es 0), zr=1. Si nzr=1 (out no es 0), zr=0.
+}
