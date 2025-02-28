@@ -1,0 +1,16 @@
+CHIP DMux {
+    IN in, sel;
+    OUT a, b;
+
+    PARTS:
+    // Implementación de NOT sel usando una puerta NAND
+    Nand(a=sel, b=sel, out=notsel);
+
+    // Implementación de a = in AND (NOT sel)
+    Nand(a=in, b=notsel, out=nanda);
+    Nand(a=nanda, b=nanda, out=a);
+
+    // Implementación de b = in AND sel
+    Nand(a=in, b=sel, out=nandb);
+    Nand(a=nandb, b=nandb, out=b);
+}

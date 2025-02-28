@@ -1,0 +1,32 @@
+CHIP Or8Way {
+    IN in[8];    // 8 bits de entrada
+    OUT out;     // 1 bit de salida
+
+    PARTS:
+    Nand(a=in[0] , b=in[0] , out=nand0 );
+    Nand(a=in[1] , b=in[1] , out=nand1 );
+    Nand(a=in[2] , b=in[2] , out=nand2 );
+    Nand(a=in[3] , b=in[3] , out=nand3 );
+    Nand(a=in[4] , b=in[4] , out=nand4 );
+    Nand(a=in[5] , b=in[5] , out=nand5 );
+    Nand(a=in[6] , b=in[6] , out=nand6 );
+    Nand(a=in[7] , b=in[7] , out=nand7 );
+
+    Nand(a=nand0 , b=nand1 , out=x1 );
+    Nand(a=nand2 , b=nand3 , out=x2 );
+    Nand(a=nand4 , b=nand5 , out=x3 );
+    Nand(a=nand6 , b=nand7 , out=x4 );
+
+    Nand(a=x1 , b=x1 , out=nandx1 );
+    Nand(a=x2 , b=x2 , out=nandx2 );
+    Nand(a=x3 , b=x3 , out=nandx3 );
+    Nand(a=x4 , b=x4 , out=nandx4 );
+
+    Nand(a=nandx1 , b=nandx2 , out=z1 );
+    Nand(a=nandx3 , b=nandx4 , out=z2 );
+
+    Nand(a=z1, b=z1 , out=nandz1 );
+    Nand(a=z2, b=z2 , out=nandz2 );
+
+    Nand(a=nandz1, b=nandz2 , out=out);
+}
