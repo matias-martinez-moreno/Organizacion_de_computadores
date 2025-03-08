@@ -1,14 +1,16 @@
 /**
- * 1-bit register.
- * If load[t]=1 then out[t+1] = in[t]
- *              else out does not change (out[t+1]=out[t])
+ * Registro de 1 bit.
+ * Si load[t]=1, entonces out[t+1] = in[t]
+ *               de lo contrario, out no cambia (out[t+1]=out[t])
  */
 
 CHIP Bit {
-    IN in, load;
-    OUT out;
+    IN in, load;    // Entradas: valor de entrada (in), señal de carga (load)
+    OUT out;        // Salida: valor almacenado
 
     PARTS:
+    // Multiplexor: elige entre el valor previo (prevValue) o la entrada (in) según load
     Mux(a=prevValue, b=in, sel=load, out=muxOut);
+    // Flip-Flop D: almacena el valor seleccionado y lo emite en el próximo ciclo
     DFF(in=muxOut, out=out, out=prevValue);
 }
