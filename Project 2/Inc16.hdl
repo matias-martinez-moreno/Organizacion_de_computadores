@@ -1,7 +1,5 @@
-/**
- * 16-bit incrementer:
- * out = in + 1
- */
+// out = in + 1
+
 CHIP Inc16 {
     IN in[16];
     OUT out[16];
