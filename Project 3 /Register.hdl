@@ -1,7 +1,7 @@
- /**
- * 16-bit register.
- * If load[t] == 1 then out[t+1] = in[t]
- *                 else out[t+1] = out[t] (no change)
+/**
+ * Registro de 16 bits.
+ * Si load[t] == 1, entonces out[t+1] = in[t]
+ *                  de lo contrario, out[t+1] = out[t] (sin cambio)
  */
  CHIP Register {
     IN in[16], load;
