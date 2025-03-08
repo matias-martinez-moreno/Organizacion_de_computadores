@@ -1,4 +1,4 @@
-/* Operation | zx | nx | zy | ny | f | no
+/* Operación | zx | nx | zy | ny | f | no
  * 0         | 1  | 0  | 1  | 0  | 1 | 0 
  * 1         | 1  | 1  | 1  | 1  | 1 | 1  
  * -1        | 1  | 0  | 1  | 0  | 1 | 1  
