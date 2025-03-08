@@ -1,6 +1,4 @@
-/**
- * Computes the sum of three bits.
- */
+// suma de 3 bits
 CHIP FullAdder {
     IN a, b, c;  // 1-bit inputs
     OUT sum,     // Right bit of a + b + c
