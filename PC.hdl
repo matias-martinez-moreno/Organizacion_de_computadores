@@ -1,0 +1,26 @@
+/** The PC is a 16-bit counter used to track the address of the next instruction 
+ * If reset(t) == 1, then out(t+1) = 0 (resets to zero).
+ * Else if load(t) == 1, then out(t+1) = in(t) (loads the input value).
+ * Else if inc(t) == 1, then out(t+1) = out(t) + 1 (increments the current value).
+ * Else out(t+1) = out(t) (maintains the current value).
+ */
+CHIP PC {
+    IN in[16], load, inc, reset;    // Inputs: value to load (in), control signals (load, inc, reset)
+    OUT out[16];                    // Output: current value of the Program Counter
+
+    PARTS:
+    // Increment the current PC value by 1
+    Inc16(in=currentValue, out=incrementedValue);
+
+    // First Mux: Choose between maintaining the current value or incrementing it
+    Mux16(a=currentValue, b=incrementedValue, sel=inc, out=afterInc);
+
+    // Second Mux: Choose between the previous result or loading a new value from in
+    Mux16(a=afterInc, b=in, sel=load, out=afterLoad);
+
+    // Third Mux: Choose between the previous result or resetting to 0
+    Mux16(a=afterLoad, b[0..15]=false, sel=reset, out=nextValue);
+
+    // Register: Store the selected value and output it in the next clock cycle
+    Register(in=nextValue, load=true, out=out, out=currentValue);
+}

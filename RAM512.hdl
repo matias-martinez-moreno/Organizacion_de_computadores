@@ -1,0 +1,22 @@
+//Memory of 512 registers, each 16 bits wide.
+CHIP RAM512 {
+    IN in[16], load, address[9];    // Entradas: valor de 16 bits, control de carga, dirección de 9 bits
+    OUT out[16];                    // Salida: valor almacenado en la dirección seleccionada
+
+    PARTS:
+    // DMux8Way: distribuye la señal load a uno de los 8 RAM64 según los 3 bits superiores de address
+    DMux8Way(in=load, sel=address[6..8], a=load0, b=load1, c=load2, d=load3, e=load4, f=load5, g=load6, h=load7);
+
+    // 8 RAM64: cada uno maneja 64 registros, usando los 6 bits inferiores de address
+    RAM64(in=in, load=load0, address=address[0..5], out=out0);
+    RAM64(in=in, load=load1, address=address[0..5], out=out1);
+    RAM64(in=in, load=load2, address=address[0..5], out=out2);
+    RAM64(in=in, load=load3, address=address[0..5], out=out3);
+    RAM64(in=in, load=load4, address=address[0..5], out=out4);
+    RAM64(in=in, load=load5, address=address[0..5], out=out5);
+    RAM64(in=in, load=load6, address=address[0..5], out=out6);
+    RAM64(in=in, load=load7, address=address[0..5], out=out7);
+
+    // Mux8Way16: selecciona la salida de uno de los 8 RAM64 según los 3 bits superiores de address
+    Mux8Way16(a=out0, b=out1, c=out2, d=out3, e=out4, f=out5, g=out6, h=out7, sel=address[6..8], out=out);
+}
