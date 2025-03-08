@@ -1,6 +1,4 @@
-/**
- * Computes the sum of two bits.
- */
+// suma de dos bits
 CHIP HalfAdder {
     IN a, b;    // 1-bit inputs
     OUT sum,    // Right bit of a + b 
