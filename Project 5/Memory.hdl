@@ -1,1 +1,29 @@
+/**
+ * Este chip representa toda la memoria del computador Hack, incluyendo la RAM y las áreas para pantalla y teclado.
+ * Permite leer y escribir valores así:
+ * - Lectura: Siempre muestra el valor guardado en la dirección dada por address.
+ * - Escritura: Si load está en 1, guarda el valor de in en la dirección dada por address, y este valor se ve en out desde el próximo ciclo.
+ * Reglas de direcciones:
+ * Solo se usan las primeras 16K + 8K + 1 palabras. Direcciones mayores a 0x6000 no funcionan y devuelven 0.
+ * Las direcciones 0x4000-0x5FFF son para la pantalla, y 0x6000 es para el teclado, según lo explicado en las clases y el libro.
+ */
+CHIP Memory {
+    IN in[16], load, address[15];    // Entradas: valor a escribir (in), señal de carga (load), dirección de 15 bits (address)
+    OUT out[16];                     // Salida: valor leído de la memoria en la dirección especificada
 
+    PARTS:
+    // Demultiplexor: Divide la señal load entre la RAM principal y la pantalla según el bit 14 de la dirección
+    DMux(in=load, sel=address[14], a=loadmain, b=loadscreen);
+
+    // RAM16K: Memoria principal de 16,384 registros, accede a las direcciones 0x0000-0x3FFF
+    RAM16K(in=in, address=address[0..13], load=loadmain, out=outmain);
+
+    // Screen: Mapa de memoria de la pantalla, accede a las direcciones 0x4000-0x5FFF (8K palabras)
+    Screen(in=in, address=address[0..12], load=loadscreen, out=outscreen);
+
+    // Keyboard: Mapa de memoria del teclado, accede a la dirección 0x6000
+    Keyboard(out=outkeyboard);
+
+    // Multiplexor de 4 vías: Selecciona la salida entre RAM, pantalla o teclado según los bits 13 y 14 de la dirección
+    Mux4Way16(a=outmain, b=outmain, c=outscreen, d=outkeyboard, sel=address[13..14], out=out);
+}
