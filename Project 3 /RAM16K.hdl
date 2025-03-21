@@ -1,4 +1,4 @@
-//Memory of 16,384 registers, each 16 bits wide.
+// Memoria de 16,384 registros, cada uno de 16 bits de ancho.
 CHIP RAM16K {
     IN in[16], load, address[14];    // Entradas: valor de 16 bits, control de carga, dirección de 14 bits
     OUT out[16];                     // Salida: valor almacenado en la dirección seleccionada
