@@ -1,0 +1,23 @@
+/**
+ * El computador Hack, formado por la CPU, la ROM y la RAM.
+ * Cuando reset está en 0, el programa guardado en la ROM se ejecuta normalmente.
+ * Cuando reset está en 1, la ejecución del programa se reinicia desde el principio.
+ * Para empezar a correr el programa cargado en la ROM, primero pon reset en 1
+ * y luego cámbialo a 0. Desde ese momento, todo depende del programa:
+ * según su código y si está bien escrito, la pantalla podría mostrar algo,
+ * el usuario podría tener que usar el teclado para ingresar datos,
+ * o el programa podría simplemente hacer algún cálculo o proceso.
+ */
+CHIP Computer {
+    IN reset;    // Señal para reiniciar (reset=1) o ejecutar el programa (reset=0)
+
+    PARTS:
+    // ROM32K: Memoria de solo lectura con 32K palabras, entrega la instrucción en la dirección pc
+    ROM32K(address=pc, out=instruction);
+
+    // CPU: Procesa las instrucciones, lee/escribe en memoria y controla el flujo del programa
+    CPU(inM=inM, instruction=instruction, reset=reset, outM=outM, writeM=writeM, addressM=addressM, pc=pc);
+
+    // Memory: Maneja la RAM, la pantalla y el teclado, conecta las entradas y salidas de la CPU
+    Memory(in=outM, load=writeM, address=addressM, out=inM);
+}
