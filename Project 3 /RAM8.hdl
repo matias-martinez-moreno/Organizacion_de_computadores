@@ -1,4 +1,4 @@
-//Memoria de 8 registers, cada uno de 16 bits
+// Memoria de 8 registros, cada uno de 16 bits de ancho.
 CHIP RAM8 {
     IN in[16], load, address[3];    // Entradas: valor de 16 bits, control de carga, dirección de 3 bits
     OUT out[16];                    // Salida: valor almacenado en la dirección seleccionada
