@@ -1,4 +1,4 @@
-//Memory of 512 registers, each 16 bits wide.
+// Memoria de 512 registros, cada uno de 16 bits de ancho.
 CHIP RAM512 {
     IN in[16], load, address[9];    // Entradas: valor de 16 bits, control de carga, dirección de 9 bits
     OUT out[16];                    // Salida: valor almacenado en la dirección seleccionada
