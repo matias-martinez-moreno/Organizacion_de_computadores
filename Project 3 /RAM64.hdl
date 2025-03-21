@@ -1,4 +1,4 @@
-//Memory of 64 registers, each 16 bits wide.
+// Memoria de 64 registros, cada uno de 16 bits de ancho.
 CHIP RAM64 {
     IN in[16], load, address[6];    // Entradas: valor de 16 bits, control de carga, dirección de 6 bits
     OUT out[16];                    // Salida: valor almacenado en la dirección seleccionada
