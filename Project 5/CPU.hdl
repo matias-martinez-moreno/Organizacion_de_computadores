@@ -1,0 +1,68 @@
+/**
+ * La Unidad Central de Procesamiento (CPU) del computador Hack.
+ * Este chip lee y ejecuta las instrucciones en código binario que recibe por la entrada instruction,
+ * siguiendo las reglas del lenguaje máquina Hack. Si la instrucción es de tipo C, calcula la operación
+ * indicada (como suma o resta). Si la instrucción necesita leer un valor de la memoria RAM, usa el
+ * valor de la entrada inM. Si necesita escribir en la memoria, pone el valor a escribir en outM,
+ * la dirección destino en addressM, y activa writeM (si writeM = 0, el valor de outM no importa).
+ * Cuando reset es 0, calcula la dirección de la próxima instrucción y la envía a pc. Si reset es 1,
+ * reinicia pc a 0 para empezar de nuevo.
+ * Nota: outM y writeM cambian inmediatamente según la instrucción actual (son combinacionales).
+ * addressM y pc se actualizan solo en el siguiente ciclo de reloj (son secuenciales).
+ */
+CHIP CPU {
+    IN  inM[16],         // Valor de entrada M (contenido de RAM[A])
+        instruction[16], // Instrucción binaria a ejecutar
+        reset;           // Señal para reiniciar el programa (reset=1) o continuar (reset=0)
+
+    OUT outM[16],        // Valor a escribir en la memoria RAM (M)
+        writeM,          // ¿Escribir en M? (1 = sí, 0 = no)
+        addressM[15],    // Dirección en la memoria de datos (para M)
+        pc[15];          // Dirección de la próxima instrucción
+
+    PARTS:
+    // Invierte el bit 15 de la instrucción para distinguir entre A (0) y C (1)
+    Not(in=instruction[15], out=ni);
+
+    // Elige entre el resultado de la ALU (outtM) o la instrucción misma (para A-instrucciones)
+    Mux16(a=outtM, b=instruction, sel=ni, out=i);
+
+    // Carga el registro A si es una A-instrucción o si la instrucción C tiene A como destino
+    Or(a=ni, b=instruction[5], out=intoA);
+    ARegister(in=i, load=intoA, out=A, out[0..14]=addressM);
+
+    // Decide si la ALU usa A o M como segundo operando (bit 12 de la instrucción)
+    And(a=instruction[15], b=instruction[12], out=AorM);
+    Mux16(a=A, b=inM, sel=AorM, out=AM);
+
+    // ALU: Calcula la operación según los bits de control de la instrucción C
+    ALU(x=D, y=AM, zx=instruction[11], nx=instruction[10], zy=instruction[9], ny=instruction[8], 
+        f=instruction[7], no=instruction[6], out=outtM, out=outM, zr=zr, ng=ng);
+
+    // Carga el registro D si la instrucción C tiene D como destino (bit 4)
+    And(a=instruction[15], b=instruction[4], out=intoD);
+    DRegister(in=outtM, load=intoD, out=D);
+
+    // Activa writeM si la instrucción C escribe en M (bit 3)
+    And(a=instruction[15], b=instruction[3], out=writeM);
+
+    // Lógica de salto: Determina si el PC debe cargar una nueva dirección
+    Not(in=ng, out=pos);              // ¿Es positivo? (no negativo)
+    Not(in=zr, out=nzr);              // ¿No es cero?
+    And(a=instruction[15], b=instruction[0], out=jgt);  // Salto si > 0 (JGT)
+    And(a=pos, b=nzr, out=posnzr);    // Positivo y no cero
+    And(a=jgt, b=posnzr, out=ld1);    // Condición para JGT
+
+    And(a=instruction[15], b=instruction[1], out=jeq);  // Salto si = 0 (JEQ)
+    And(a=jeq, b=zr, out=ld2);        // Condición para JEQ
+
+    And(a=instruction[15], b=instruction[2], out=jlt);  // Salto si < 0 (JLT)
+    And(a=jlt, b=ng, out=ld3);        // Condición para JLT
+
+    // Combina las condiciones de salto (JGT, JEQ, JLT)
+    Or(a=ld1, b=ld2, out=ldt);
+    Or(a=ld3, b=ldt, out=ld);
+
+    // PC: Controla la próxima instrucción (carga A si hay salto, incrementa si no, reinicia si reset=1)
+    PC(in=A, load=ld, inc=true, reset=reset, out[0..14]=pc);
+}
